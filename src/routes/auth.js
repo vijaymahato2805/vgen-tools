@@ -82,12 +82,14 @@ router.post('/register', authRateLimit, registerValidation, async (req, res) => 
     }
 
     // Create new user
+    console.log('🔧 Creating user with model:', UserModel.name || 'Unknown');
     const user = await UserModel.create({
       email,
       password,
       firstName,
       lastName
     });
+    console.log('✅ User created successfully:', user.id);
 
     // Generate JWT token
     const token = generateToken(user.id);
