@@ -40,10 +40,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/vgen-tools.git"
+    "url": "https://github.com/vijaymahato2805/VGENT.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/vgen-tools/issues"
+    "url": "https://github.com/vijaymahato2805/VGENT/issues"
   },
   "homepage": "https://vgen-tools.vercel.app",
   "dependencies": {
