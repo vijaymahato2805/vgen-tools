@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VGen Tools - AI-Powered Career Development Platform</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-robot"></i>
+                <span>VGen Tools</span>
+            </div>
+            <div class="nav-menu" id="navMenu">
+                <a href="#home" class="nav-link">Home</a>
+                <a href="#tools" class="nav-link">Tools</a>
+                <a href="#about" class="nav-link">About</a>
+                <div class="nav-auth">
+                    <button id="loginBtn" class="btn btn-outline">Login</button>
+                    <button id="registerBtn" class="btn btn-primary">Register</button>
+                </div>
+            </div>
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">AI-Powered Career Development Platform</h1>
+            <p class="hero-subtitle">Transform your career with our 8 intelligent tools designed to enhance your professional journey</p>
+            <div class="hero-buttons">
+                <button class="btn btn-primary btn-large">Get Started</button>
+                <button class="btn btn-outline btn-large">Learn More</button>
+            </div>
+        </div>
+        <div class="hero-stats">
+            <div class="stat">
+                <span class="stat-number">8</span>
+                <span class="stat-label">AI Tools</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number">1000+</span>
+                <span class="stat-label">Users</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number">50K+</span>
+                <span class="stat-label">Generations</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tools Section -->
+    <section id="tools" class="tools">
+        <div class="container">
+            <h2 class="section-title">Our AI-Powered Tools</h2>
+            <p class="section-subtitle">Discover the complete suite of tools designed to accelerate your career growth</p>
+            
+            <div class="tools-grid">
+                <!-- Resume Builder -->
+                <div class="tool-card" data-tool="resume">
+                    <div class="tool-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h3>AI Resume Builder</h3>
+                    <p>Create professional, ATS-optimized resumes tailored to your industry and experience level.</p>
+                    <div class="tool-features">
+                        <span class="feature-tag">ATS-Friendly</span>
+                        <span class="feature-tag">Customizable</span>
+                        <span class="feature-tag">Professional</span>
+                    </div>
+                    <button class="btn btn-primary tool-btn">Try Now</button>
+                </div>
+
+                <!-- Cover Letter Generator -->
+                <div class="tool-card" data-tool="cover-letter">
+                    <div class="tool-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <h3>Smart Cover Letters</h3>
+                    <p>Generate personalized cover letters that highlight your unique value proposition.</p>
+                    <div class="tool-features">
+                        <span class="feature-tag">Personalized</span>
+                        <span class="feature-tag">Compelling</span>
+                        <span class="feature-tag">Job-Specific</span>
+                    </div>
+                    <button class="btn btn-primary tool-btn">Try Now</button>
+                </div>
+
+                <!-- Bio Generator -->
+                <div class="tool-card" data-tool="bio">
+                    <div class="tool-icon">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <h3>Professional Bio</h3>
+                    <p>Craft engaging professional bios for LinkedIn, Twitter, and other social platforms.</p>
+                    <div class="tool-features">
+                        <span class="feature-tag">Multi-Platform</span>
+                        <span class="feature-tag">SEO-Optimized</span>
+                        <span class="feature-tag">Engaging</span>
+                    </div>
+                    <button class="btn btn-primary tool-btn">Try Now</button>
+                </div>
+
+                <!-- Interview Prep -->
+                <div class="tool-card" data-tool="interview">
+                    <div class="tool-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h3>Interview Preparation</h3>
+                    <p>Practice with AI-generated interview questions and get instant feedback on your responses.</p>
+                    <div class="tool-features">
+                        <span class="feature-tag">Personalized</span>
+                        <span class="feature-tag">Industry-Specific</span>
+                        <span class="feature-tag">Feedback</span>
+                    </div>
+                    <button class="btn btn-primary tool-btn">Try Now</button>
+                </div>
+
+                <!-- Flashcard Generator -->
+                <div class="tool-card" data-tool="flashcard">
+                    <div class="tool-icon">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <h3>Smart Flashcards</h3>
+                    <p>Create interactive flashcards from any content to enhance your learning experience.</p>
+                    <div class="tool-features">
+                        <span class="feature-tag">Auto-Generate</span>
+                        <span class="feature-tag">Interactive</span>
+                        <span class="feature-tag">Progress Tracking</span>
+                    </div>
+                    <button class="btn btn-primary tool-btn">Try Now</button>
+                </div>
+
+                <!-- Content Analyzer -->
+                <div class="tool-card" data-tool="analyzer">
+                    <div class="tool-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Content Analyzer</h3>
+                    <p>Analyze documents, extract key insights, and improve your content quality.</p>
+                    <div class="tool-features">
+                        <span class="feature-tag">Document Analysis</span>
+                        <span class="feature-tag">Insights</span>
+                        <span class="feature-tag">Optimization</span>
+                    </div>
+                    <button class="btn btn-primary tool-btn">Try Now</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Authentication Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Login to VGen Tools</h2>
+                <span class="close" id="closeModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="authForm">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group" id="nameFields" style="display: none;">
+                        <div class="form-row">
+                            <input type="text" id="firstName" name="firstName" placeholder="First Name" required>
+                            <input type="text" id="lastName" name="lastName" placeholder="Last Name" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Login</button>
+                    <p class="auth-switch">
+                        <span id="switchText">Don't have an account? </span>
+                        <a href="#" id="switchAuth">Register here</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tool Modal -->
+    <div id="toolModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="toolModalTitle">Tool</h2>
+                <span class="close" id="closeToolModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="toolContent">
+                    <!-- Tool content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="spinner-overlay" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

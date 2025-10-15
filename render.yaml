@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: vgen-tools
+    env: nodejs
+    buildCommand: npm install
+    startCommand: npm start
+    port: 3000
+    autoDeploy: false
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        generateValue: true
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+
+  - type: pserv
+    name: vgen-tools-db
+    env: mongodb-atlas
+    ipAllowList: []  # Only accessible by other services in same project
+    plan: starter
+
+disk:
+  - name: uploads
+    mountPath: /opt/render/project/src/uploads
+    sizeGB: 1
+
+staticSites:
+  - name: vgen-tools-static
+    buildCommand: npm run build:frontend
+    staticPublishPath: ./dist
+    environmentSlug: html

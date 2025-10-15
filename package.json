@@ -1,0 +1,80 @@
+{
+  "name": "vgen-tools",
+  "version": "1.0.0",
+  "description": "8-in-1 AI-powered web app for career development, knowledge creation, and productivity enhancement",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "jest",
+    "build": "echo 'No build step required for backend'",
+    "build:frontend": "echo 'Frontend build would go here'",
+    "deploy:vercel": "vercel --prod",
+    "deploy:render": "echo 'Deploy via Render dashboard or CLI'",
+    "lint": "eslint src/**/*.js",
+    "lint:fix": "eslint src/**/*.js --fix",
+    "format": "prettier --write src/**/*.js",
+    "db:seed": "node scripts/seed.js",
+    "db:migrate": "echo 'No migrations needed for this project'",
+    "health": "curl http://localhost:3000/health || echo 'Server not running'",
+    "setup": "npm install && cp .env.example .env && echo 'Please update .env file with your API keys'"
+  },
+  "keywords": [
+    "ai",
+    "career",
+    "productivity",
+    "resume",
+    "cover-letter",
+    "bio",
+    "flashcards",
+    "interview",
+    "nodejs",
+    "express",
+    "gemini"
+  ],
+  "author": "VGen Tools Team",
+  "license": "ISC",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/vgen-tools.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/vgen-tools/issues"
+  },
+  "homepage": "https://vgen-tools.vercel.app",
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "@supabase/supabase-js": "^2.75.0",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "express-validator": "^7.2.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.47.0",
+    "jest": "^29.6.2",
+    "nodemon": "^3.0.1",
+    "prettier": "^3.0.2"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/__tests__/**/*.js",
+      "**/?(*.)+(spec|test).js"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/app.js"
+    ]
+  }
+}
