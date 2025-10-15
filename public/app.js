@@ -153,14 +153,22 @@ const handleLogin = async (email, password) => {
         hideModal('authModal');
         showNotification(`Welcome back, ${currentUser.firstName || currentUser.first_name}!`);
 
-        // Check if tool modal is open and refresh it
-        const toolModal = document.getElementById('toolModal');
-        if (toolModal && toolModal.style.display === 'block' && currentToolModal) {
-            console.log('DEBUG: Tool modal is open after login, refreshing content for:', currentToolModal);
-            const toolContent = document.getElementById('toolContent');
-            if (toolContent && toolContent.querySelector('.auth-required')) {
-                console.log('DEBUG: Tool modal shows auth required, refreshing with authenticated content');
-                showToolModal(currentToolModal);
+        // Check if there's a pending tool to redirect to
+        const pendingTool = sessionStorage.getItem('pendingTool');
+        if (pendingTool) {
+            console.log('DEBUG: Redirecting to pending tool:', pendingTool);
+            sessionStorage.removeItem('pendingTool');
+            showToolModal(pendingTool);
+        } else {
+            // Check if tool modal is open and refresh it (legacy behavior)
+            const toolModal = document.getElementById('toolModal');
+            if (toolModal && toolModal.style.display === 'block' && currentToolModal) {
+                console.log('DEBUG: Tool modal is open after login, refreshing content for:', currentToolModal);
+                const toolContent = document.getElementById('toolContent');
+                if (toolContent && toolContent.querySelector('.auth-required')) {
+                    console.log('DEBUG: Tool modal shows auth required, refreshing with authenticated content');
+                    showToolModal(currentToolModal);
+                }
             }
         }
 
@@ -194,14 +202,22 @@ const handleRegister = async (email, password, firstName, lastName) => {
         hideModal('authModal');
         showNotification('Registration successful!');
 
-        // Check if tool modal is open and refresh it
-        const toolModal = document.getElementById('toolModal');
-        if (toolModal && toolModal.style.display === 'block' && currentToolModal) {
-            console.log('DEBUG: Tool modal is open after registration, refreshing content for:', currentToolModal);
-            const toolContent = document.getElementById('toolContent');
-            if (toolContent && toolContent.querySelector('.auth-required')) {
-                console.log('DEBUG: Tool modal shows auth required, refreshing with authenticated content');
-                showToolModal(currentToolModal);
+        // Check if there's a pending tool to redirect to
+        const pendingTool = sessionStorage.getItem('pendingTool');
+        if (pendingTool) {
+            console.log('DEBUG: Redirecting to pending tool after registration:', pendingTool);
+            sessionStorage.removeItem('pendingTool');
+            showToolModal(pendingTool);
+        } else {
+            // Check if tool modal is open and refresh it (legacy behavior)
+            const toolModal = document.getElementById('toolModal');
+            if (toolModal && toolModal.style.display === 'block' && currentToolModal) {
+                console.log('DEBUG: Tool modal is open after registration, refreshing content for:', currentToolModal);
+                const toolContent = document.getElementById('toolContent');
+                if (toolContent && toolContent.querySelector('.auth-required')) {
+                    console.log('DEBUG: Tool modal shows auth required, refreshing with authenticated content');
+                    showToolModal(currentToolModal);
+                }
             }
         }
 
@@ -276,21 +292,25 @@ const showToolModal = (toolType) => {
         modalTitle.innerHTML = `<i class="fas fa-${toolConfig[toolType].icon}"></i> ${toolConfig[toolType].title}`;
 
         if (!currentUser) {
-            console.log('DEBUG: Showing auth required message');
-            toolContent.innerHTML = `
-                <div class="auth-required">
-                    <h3>Authentication Required</h3>
-                    <p>Please log in to access this tool.</p>
-                    <button class="btn btn-primary" onclick="showModal('authModal')">Login / Register</button>
-                </div>
-            `;
+            console.log('DEBUG: User not authenticated, showing login modal directly');
+            // Store the tool type so we can redirect back after login
+            sessionStorage.setItem('pendingTool', toolType);
+            
+            // Set up login modal
+            document.getElementById('modalTitle').textContent = 'Login to Access ' + toolConfig[toolType].title;
+            document.getElementById('nameFields').style.display = 'none';
+            document.getElementById('authForm').reset();
+            document.getElementById('switchText').textContent = "Don't have an account? ";
+            document.getElementById('switchAuth').textContent = 'Register here';
+            
+            // Show login modal instead of tool modal
+            showModal('authModal');
         } else {
             console.log('DEBUG: Showing tool form for authenticated user');
             toolContent.innerHTML = generateToolForm(toolType);
             setupToolForm(toolType);
+            showModal('toolModal');
         }
-
-        showModal('toolModal');
     }
 };
 
