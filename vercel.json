@@ -1,7 +1,7 @@
 {
   "version": 2,
   "name": "vgen-tools",
-  "buildCommand": "npm run build",
+  
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "nodejs",
