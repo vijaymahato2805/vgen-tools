@@ -274,7 +274,8 @@ const showToolModal = (toolType) => {
     console.log('DEBUG: currentToken exists:', !!currentToken);
 
     const modalTitle = document.getElementById('toolModalTitle');
-    const toolContent = document.getElementById('toolContent');
+    const toolFormContainer = document.getElementById('toolFormContainer');
+    const toolResultContainer = document.getElementById('toolResultContainer');
 
     const toolConfig = {
         bio: { title: 'AI Bio Generator', icon: 'user-circle' },
@@ -307,7 +308,8 @@ const showToolModal = (toolType) => {
             showModal('authModal');
         } else {
             console.log('DEBUG: Showing tool form for authenticated user');
-            toolContent.innerHTML = generateToolForm(toolType);
+            toolFormContainer.innerHTML = generateToolForm(toolType);
+            toolResultContainer.innerHTML = ''; // Clear previous results
             setupToolForm(toolType);
             showModal('toolModal');
         }
@@ -664,7 +666,7 @@ const setupToolForm = (toolType) => {
             hideSpinner();
             
             // Show results
-            document.getElementById('toolContent').innerHTML = `
+            document.getElementById('toolResultContainer').innerHTML = `
                 <div class="tool-results">
                     <h4>Generated Content</h4>
                     <div class="result-content">
@@ -672,7 +674,6 @@ const setupToolForm = (toolType) => {
                     </div>
                     <div class="result-actions">
                         <button class="btn btn-outline" onclick="saveToHistory('${toolType}', response.data)">Save to History</button>
-                        <button class="btn btn-primary" onclick="showToolModal('${toolType}')">Generate Another</button>
                     </div>
                 </div>
             `;

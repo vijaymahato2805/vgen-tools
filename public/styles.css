@@ -419,8 +419,44 @@ body {
     color: var(--gray-600);
 }
 
-.modal-body {
+.modal-body-split {
+    display: flex;
+    padding: 0;
+}
+
+.modal-column-left {
+    width: 50%;
     padding: 2rem;
+    border-right: 1px solid var(--gray-200);
+}
+
+.modal-column-right {
+    width: 50%;
+    padding: 2rem;
+    background-color: var(--gray-50);
+}
+
+#toolResultContainer {
+    height: 100%;
+    overflow-y: auto;
+}
+
+.tool-results {
+    padding: 1rem;
+}
+
+.result-content {
+    background-color: var(--white);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.result-actions {
+    display: flex;
+    gap: 1rem;
 }
 
 /* Form Styles */
