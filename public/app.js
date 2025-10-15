@@ -742,6 +742,15 @@ document.addEventListener('DOMContentLoaded', () => {
         showModal('authModal');
     });
 
+    document.getElementById('getStartedBtn').addEventListener('click', () => {
+        document.getElementById('modalTitle').textContent = 'Register for VGen Tools';
+        document.getElementById('nameFields').style.display = 'flex';
+        document.getElementById('authForm').reset();
+        document.getElementById('switchText').textContent = 'Already have an account? ';
+        document.getElementById('switchAuth').textContent = 'Login here';
+        showModal('authModal');
+    });
+
     document.getElementById('closeModal').addEventListener('click', () => {
         hideModal('authModal');
     });

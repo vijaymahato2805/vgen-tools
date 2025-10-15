@@ -107,13 +107,14 @@ router.post('/register', authRateLimit, registerValidation, async (req, res) => 
 
     // Create new user
     console.log('🔧 Creating user with model:', UserModel.name || 'Unknown');
+    console.log(`[Vercel] Attempting to create user: ${email}`);
     const user = await UserModel.create({
       email,
       password,
       firstName,
       lastName
     });
-    console.log('✅ User created successfully:', user.id);
+    console.log(`[Vercel] User created successfully: ${user.id}`);
 
     // Generate JWT token
     const token = generateToken(user.id);
@@ -152,13 +153,23 @@ router.post('/login', authRateLimit, loginValidation, async (req, res) => {
     const { email, password } = req.body;
 
     // Find user by email
+    console.log(`[Vercel] Finding user by email: ${email}`);
     const user = await UserModel.findByEmail(email);
 
-    if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).json({
-        error: 'Invalid email or password'
-      });
+    if (!user) {
+      console.log(`[Vercel] User not found: ${email}`);
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
+
+    console.log(`[Vercel] User found: ${email}. Comparing password...`);
+    const isMatch = await user.comparePassword(password);
+
+    if (!isMatch) {
+      console.log(`[Vercel] Password does not match for user: ${email}`);
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    console.log(`[Vercel] Password matches for user: ${email}`);
 
     if (!user.is_active) {
       return res.status(401).json({
