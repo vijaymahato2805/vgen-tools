@@ -1,15 +1,36 @@
 const jwt = require('jsonwebtoken');
 const { supabase } = require('../config/supabase');
 
-// Dynamic user model selection
+// Dynamic user model selection with connection testing
 let UserModel;
-try {
-  // Test if we can use Supabase
-  const UserSupabase = require('../models/UserSupabase');
-  UserModel = UserSupabase;
-  console.log(' Auth middleware using Supabase model');
-} catch (error) {
-  console.log(' Auth middleware using local fallback model');
+
+async function initializeAuthModel() {
+  try {
+    // Test actual Supabase connection
+    const { supabase } = require('../config/supabase');
+    const { data, error } = await supabase.from('users').select('count').limit(1);
+    
+    if (error && error.message.includes('fetch failed')) {
+      throw new Error('Network connection to Supabase failed');
+    }
+    
+    const UserSupabase = require('../models/UserSupabase');
+    UserModel = UserSupabase;
+    console.log(' Auth middleware using Supabase model (connection verified)');
+  } catch (error) {
+    console.log(' Auth middleware using local fallback model:', error.message);
+    UserModel = require('../models/UserLocal');
+  }
+}
+
+// Initialize with fallback
+initializeAuthModel().catch(() => {
+  console.log(' Auth middleware defaulting to local model');
+  UserModel = require('../models/UserLocal');
+});
+
+// Set immediate default
+if (!UserModel) {
   UserModel = require('../models/UserLocal');
 }
 

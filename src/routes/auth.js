@@ -7,14 +7,38 @@ const { supabase } = require('../config/supabase');
 let UserModel;
 let usingSupabase = false;
 
-try {
-  // Test if we can actually use Supabase
-  const testSupabase = require('../models/UserSupabase');
-  UserModel = testSupabase;
-  usingSupabase = true;
-  console.log('✅ Using Supabase for authentication');
-} catch (error) {
-  console.log('⚠️  Supabase model failed, using local fallback');
+// Initialize user model with proper connection testing
+async function initializeUserModel() {
+  try {
+    // Test if we can actually connect to Supabase
+    const { supabase } = require('../config/supabase');
+    const { data, error } = await supabase.from('users').select('count').limit(1);
+    
+    if (error && error.message.includes('fetch failed')) {
+      throw new Error('Network connection to Supabase failed');
+    }
+    
+    // If we get here, Supabase is working
+    const testSupabase = require('../models/UserSupabase');
+    UserModel = testSupabase;
+    usingSupabase = true;
+    console.log('✅ Using Supabase for authentication (connection verified)');
+  } catch (error) {
+    console.log('⚠️  Supabase connection failed, using local fallback:', error.message);
+    UserModel = require('../models/UserLocal');
+    usingSupabase = false;
+  }
+}
+
+// Initialize immediately but don't block the module loading
+initializeUserModel().catch(() => {
+  console.log('⚠️  Fallback to local authentication due to initialization error');
+  UserModel = require('../models/UserLocal');
+  usingSupabase = false;
+});
+
+// Set default to local for immediate use
+if (!UserModel) {
   UserModel = require('../models/UserLocal');
   usingSupabase = false;
 }
