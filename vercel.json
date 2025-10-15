@@ -1,10 +1,9 @@
 {
   "version": 2,
   "name": "vgen-tools",
-  
   "devCommand": "npm run dev",
   "installCommand": "npm install",
-  "framework": "nodejs",
+  "framework": "express",
   "regions": ["iad1"],
   "functions": {
     "src/**/*.js": {
