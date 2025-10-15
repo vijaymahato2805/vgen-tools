@@ -415,7 +415,7 @@ const generateToolForm = (toolType) => {
         `,
         
         'cover-letter': `
-            <form id="cover-letterForm">
+            <form id="coverletterForm">
                 <div class="form-section">
                     <h4>Personal Information</h4>
                     <div class="form-row">
@@ -584,7 +584,7 @@ const generateToolForm = (toolType) => {
 };
 
 const setupToolForm = (toolType) => {
-    const form = document.getElementById(`${toolType}Form`);
+    const form = document.getElementById(`${toolType.replace('-', '')}Form`);
     if (!form) return;
 
     form.addEventListener('submit', async (e) => {
