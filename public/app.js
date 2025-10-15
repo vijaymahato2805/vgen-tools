@@ -593,6 +593,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Footer tool links
+    document.querySelectorAll('.footer-column a[data-tool]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const toolType = e.target.dataset.tool;
+            showToolModal(toolType);
+        });
+    });
+
     // Close modals when clicking outside
     window.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal')) {
