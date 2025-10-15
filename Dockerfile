@@ -1,34 +1,47 @@
-# Use Node.js 18 LTS Alpine for smaller image size
-FROM node:18-alpine
+# Use Node.js 18 LTS Alpine for smaller image
+FROM node:18-alpine AS builder
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files
+# Install dependencies for build
 COPY package*.json ./
-
-# Install dependencies
-RUN npm ci --only=production
+RUN npm ci
 
 # Copy application code
 COPY . .
 
-# Create non-root user for security
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
+# Build the Next.js app
+RUN npm run build
 
-# Create uploads directory
-RUN mkdir -p uploads && chown -R nextjs:nodejs uploads
+# ===============================
+# Production image
+# ===============================
+FROM node:18-alpine AS runner
 
-# Switch to non-root user
-USER nextjs
+WORKDIR /app
+
+# Copy only production dependencies
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy built app from builder
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/next.config.js ./
+COPY --from=builder /app/package.json ./
+
+# Create non-root user
+RUN addgroup -g 1001 -S nextgroup
+RUN adduser -S nextuser -u 1001
+USER nextuser
 
 # Expose port
 EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "const http=require('http');const req=http.request({hostname:'localhost',port:3000,path:'/health'},res=>{process.exit(res.statusCode===200?0:1)});req.on('error',()=>process.exit(1));req.end();"
+  CMD node -e "const http=require('http');const req=http.request({hostname:'localhost',port:3000,path:'/api/health'},res=>{process.exit(res.statusCode===200?0:1)});req.on('error',()=>process.exit(1));req.end();"
 
-# Start the application
+# Start the Next.js app
 CMD ["npm", "start"]
