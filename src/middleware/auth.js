@@ -1,6 +1,17 @@
 const jwt = require('jsonwebtoken');
-const UserSupabase = require('../models/UserSupabase');
 const { supabase } = require('../config/supabase');
+
+// Dynamic user model selection
+let UserModel;
+try {
+  // Test if we can use Supabase
+  const UserSupabase = require('../models/UserSupabase');
+  UserModel = UserSupabase;
+  console.log(' Auth middleware using Supabase model');
+} catch (error) {
+  console.log(' Auth middleware using local fallback model');
+  UserModel = require('../models/UserLocal');
+}
 
 // Generate JWT token
 const generateToken = (userId) => {
@@ -31,7 +42,7 @@ const protect = async (req, res, next) => {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      const user = await UserSupabase.findById(decoded.userId);
+      const user = await UserModel.findById(decoded.userId);
 
       if (!user) {
         return res.status(401).json({
@@ -75,7 +86,7 @@ const optionalAuth = async (req, res, next) => {
         try {
           const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-          const user = await UserSupabase.findById(decoded.userId);
+          const user = await UserModel.findById(decoded.userId);
 
           if (user && user.is_active) {
             req.user = user;
