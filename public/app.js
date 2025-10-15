@@ -412,6 +412,171 @@ const generateToolForm = (toolType) => {
                 
                 <button type="submit" class="btn btn-primary btn-full">Generate Resume</button>
             </form>
+        `,
+        
+        'cover-letter': `
+            <form id="cover-letterForm">
+                <div class="form-section">
+                    <h4>Personal Information</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="fullName">Full Name</label>
+                            <input type="text" id="fullName" name="fullName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h4>Job Details</h4>
+                    <div class="form-group">
+                        <label for="jobTitle">Job Title</label>
+                        <input type="text" id="jobTitle" name="jobTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="companyName">Company Name</label>
+                        <input type="text" id="companyName" name="companyName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="jobDescription">Job Description (optional)</label>
+                        <textarea id="jobDescription" name="jobDescription" rows="3" placeholder="Paste the job description or key requirements"></textarea>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h4>Your Background</h4>
+                    <div class="form-group">
+                        <label for="experience">Relevant Experience</label>
+                        <textarea id="experience" name="experience" rows="4" placeholder="Describe your relevant experience and achievements" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="skills">Key Skills</label>
+                        <input type="text" id="skills" name="skills" placeholder="Enter key skills separated by commas">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-full">Generate Cover Letter</button>
+            </form>
+        `,
+        
+        interview: `
+            <form id="${toolType}Form">
+                <div class="form-section">
+                    <h4>Interview Details</h4>
+                    <div class="form-group">
+                        <label for="jobTitle">Job Title</label>
+                        <input type="text" id="jobTitle" name="jobTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="companyName">Company Name</label>
+                        <input type="text" id="companyName" name="companyName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="interviewType">Interview Type</label>
+                        <select id="interviewType" name="interviewType" required>
+                            <option value="behavioral">Behavioral</option>
+                            <option value="technical">Technical</option>
+                            <option value="case-study">Case Study</option>
+                            <option value="general">General</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h4>Your Background</h4>
+                    <div class="form-group">
+                        <label for="experience">Experience Level</label>
+                        <select id="experience" name="experience" required>
+                            <option value="entry">Entry Level (0-2 years)</option>
+                            <option value="mid">Mid Level (3-5 years)</option>
+                            <option value="senior">Senior Level (6+ years)</option>
+                            <option value="executive">Executive Level</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="skills">Key Skills/Technologies</label>
+                        <input type="text" id="skills" name="skills" placeholder="Enter relevant skills separated by commas">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-full">Generate Interview Questions</button>
+            </form>
+        `,
+        
+        flashcard: `
+            <form id="${toolType}Form">
+                <div class="form-section">
+                    <h4>Content Details</h4>
+                    <div class="form-group">
+                        <label for="topic">Topic/Subject</label>
+                        <input type="text" id="topic" name="topic" required placeholder="e.g., JavaScript Fundamentals, Marketing Concepts">
+                    </div>
+                    <div class="form-group">
+                        <label for="content">Content to Convert</label>
+                        <textarea id="content" name="content" rows="6" required placeholder="Paste your study material, notes, or content here"></textarea>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h4>Flashcard Settings</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="difficulty">Difficulty Level</label>
+                            <select id="difficulty" name="difficulty" required>
+                                <option value="beginner">Beginner</option>
+                                <option value="intermediate">Intermediate</option>
+                                <option value="advanced">Advanced</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="cardCount">Number of Cards</label>
+                            <select id="cardCount" name="cardCount" required>
+                                <option value="5">5 Cards</option>
+                                <option value="10">10 Cards</option>
+                                <option value="15">15 Cards</option>
+                                <option value="20">20 Cards</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-full">Generate Flashcards</button>
+            </form>
+        `,
+        
+        analyzer: `
+            <form id="${toolType}Form">
+                <div class="form-section">
+                    <h4>Content Analysis</h4>
+                    <div class="form-group">
+                        <label for="analysisType">Analysis Type</label>
+                        <select id="analysisType" name="analysisType" required>
+                            <option value="readability">Readability Analysis</option>
+                            <option value="sentiment">Sentiment Analysis</option>
+                            <option value="keywords">Keyword Extraction</option>
+                            <option value="summary">Content Summary</option>
+                            <option value="seo">SEO Analysis</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="content">Content to Analyze</label>
+                        <textarea id="content" name="content" rows="8" required placeholder="Paste your content here for analysis"></textarea>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h4>Additional Options</h4>
+                    <div class="form-group">
+                        <label for="targetAudience">Target Audience (optional)</label>
+                        <input type="text" id="targetAudience" name="targetAudience" placeholder="e.g., General public, Technical professionals, Students">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-full">Analyze Content</button>
+            </form>
         `
     };
 
@@ -428,7 +593,7 @@ const setupToolForm = (toolType) => {
         const formData = new FormData(form);
         const data = {};
         formData.forEach((value, key) => {
-            if (key === 'keywords') {
+            if (key === 'keywords' || key === 'skills') {
                 data[key] = value.split(',').map(k => k.trim()).filter(k => k);
             } else {
                 data[key] = value;
@@ -463,6 +628,37 @@ const setupToolForm = (toolType) => {
                         body: JSON.stringify(data)
                     });
                     break;
+                    
+                case 'cover-letter':
+                    response = await makeAPIRequest(API_ENDPOINTS.coverLetter.generate, {
+                        method: 'POST',
+                        body: JSON.stringify(data)
+                    });
+                    break;
+                    
+                case 'interview':
+                    response = await makeAPIRequest(API_ENDPOINTS.interview.generate, {
+                        method: 'POST',
+                        body: JSON.stringify(data)
+                    });
+                    break;
+                    
+                case 'flashcard':
+                    response = await makeAPIRequest(API_ENDPOINTS.flashcard.generate, {
+                        method: 'POST',
+                        body: JSON.stringify(data)
+                    });
+                    break;
+                    
+                case 'analyzer':
+                    response = await makeAPIRequest(API_ENDPOINTS.analyzer.analyze, {
+                        method: 'POST',
+                        body: JSON.stringify(data)
+                    });
+                    break;
+                    
+                default:
+                    throw new Error(`Tool "${toolType}" is not yet implemented`);
             }
 
             hideSpinner();
