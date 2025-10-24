@@ -4,9 +4,11 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 require('dotenv').config();
+console.log('DEBUG: src/app.js started.');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+console.log(`DEBUG: Server will attempt to run on port: ${PORT}`);
 
 // Security middleware
 app.use(helmet());
@@ -44,6 +46,7 @@ app.set('views', path.join(__dirname, '../templates'));
 
 
 // Routes
+console.log('DEBUG: Loading routes...');
 const authRoutes = require('./routes/auth');
 const resumeRoutes = require('./routes/resume');
 const coverLetterRoutes = require('./routes/coverLetter');
@@ -53,16 +56,28 @@ const analyzerRoutes = require('./routes/analyzer');
 const interviewRoutes = require('./routes/interview');
 const serviceRoutes = require('./routes/service');
 const historyRoutes = require('./routes/history');
+console.log('DEBUG: Routes loaded.');
 
+console.log('DEBUG: Registering API routes...');
 app.use('/api/auth', authRoutes);
+console.log('DEBUG: /api/auth registered.');
 app.use('/api/resume', resumeRoutes);
+console.log('DEBUG: /api/resume registered.');
 app.use('/api/cover-letter', coverLetterRoutes);
+console.log('DEBUG: /api/cover-letter registered.');
 app.use('/api/bio', bioRoutes);
+console.log('DEBUG: /api/bio registered.');
 app.use('/api/flashcard', flashcardRoutes);
+console.log('DEBUG: /api/flashcard registered.');
 app.use('/api/analyzer', analyzerRoutes);
+console.log('DEBUG: /api/analyzer registered.');
 app.use('/api/interview', interviewRoutes);
+console.log('DEBUG: /api/interview registered.');
 app.use('/api/service', serviceRoutes);
+console.log('DEBUG: /api/service registered.');
 app.use('/api/history', historyRoutes);
+console.log('DEBUG: /api/history registered.');
+console.log('DEBUG: All API routes registered.');
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -85,7 +100,8 @@ app.use((req, res) => {
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
+  console.error('DEBUG: Global error handler caught an error:', err);
+  console.error('Error stack:', err.stack);
 
   if (err.name === 'ValidationError') {
     return res.status(400).json({
@@ -109,9 +125,13 @@ app.use((err, req, res, next) => {
 
 // Start server
 if (require.main === module) {
+  console.log('DEBUG: Attempting to start server...');
   app.listen(PORT, () => {
     console.log(`🚀 VGen Tools server running on port ${PORT}`);
     console.log(`📊 Health check available at http://localhost:${PORT}/health`);
+  }).on('error', (err) => {
+    console.error('DEBUG: Server failed to start:', err.message);
+    process.exit(1);
   });
 }
 

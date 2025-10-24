@@ -1,26 +1,38 @@
 const { createClient } = require('@supabase/supabase-js');
+console.log('DEBUG: src/config/supabase.js started.');
 
 // Supabase configuration
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+console.log('DEBUG: Supabase URL:', supabaseUrl ? 'Provided' : 'MISSING');
+console.log('DEBUG: Supabase Anon Key:', supabaseKey ? 'Provided' : 'MISSING');
+console.log('DEBUG: Supabase Service Role Key:', supabaseServiceKey ? 'Provided' : 'MISSING');
+
 if (!supabaseUrl || !supabaseKey) {
+  console.error('ERROR: Missing Supabase environment variables. Please check your .env file.');
   throw new Error('Missing Supabase environment variables');
 }
 
 // Create Supabase client for public operations
+console.log('DEBUG: Creating Supabase client...');
 const supabase = createClient(supabaseUrl, supabaseKey);
+console.log('DEBUG: Supabase client created.');
 
 // Create Supabase admin client for server-side operations (if service key is available)
 let supabaseAdmin = null;
 if (supabaseServiceKey) {
+  console.log('DEBUG: Supabase Service Role Key found, creating Supabase Admin client...');
   supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false
     }
   });
+  console.log('DEBUG: Supabase Admin client created.');
+} else {
+  console.log('DEBUG: Supabase Service Role Key NOT found. Admin client will not be used.');
 }
 
 // Database table names (adjust these based on your Supabase table names)
@@ -76,18 +88,23 @@ module.exports = {
 
 // Test connection and export appropriate client
 async function testConnection() {
+  console.log('DEBUG: Attempting to test Supabase connection...');
   try {
     const client = supabaseAdmin || supabase;
     const { error } = await client.from('users').select('count').limit(1);
     
-    if (error && error.message.includes('fetch failed')) {
-      console.log('⚠️  Supabase connection failed - using offline mode');
+    if (error) {
+      console.error('ERROR: Supabase connection test failed:', error.message);
+      if (error.message.includes('fetch failed')) {
+        console.log('⚠️  Supabase connection failed (network issue) - using offline mode');
+      }
       return false;
     }
     
-    console.log('✅ Using Supabase Admin Client');
+    console.log('✅ Supabase connection successful.');
     return true;
   } catch (err) {
+    console.error('ERROR: Supabase connection test failed unexpectedly:', err.message);
     console.log('⚠️  Supabase connection failed - using offline mode');
     return false;
   }
@@ -95,10 +112,12 @@ async function testConnection() {
 
 // Export the appropriate client
 if (supabaseAdmin) {
+  console.log('DEBUG: Supabase Admin client is available. Setting as default client.');
   module.exports.supabase = supabaseAdmin;
-  module.exports.isOnline = testConnection();
+  module.exports.isOnline = testConnection(); // This will be a Promise
 } else {
-  console.log('⚠️  Using Supabase Anon Client (Admin key not available)');
+  console.log('DEBUG: Supabase Admin client NOT available. Using Supabase Anon Client.');
   module.exports.supabase = supabase;
-  module.exports.isOnline = false;
+  module.exports.isOnline = Promise.resolve(false); // Ensure isOnline is a Promise
 }
+console.log('DEBUG: src/config/supabase.js finished initialization.');

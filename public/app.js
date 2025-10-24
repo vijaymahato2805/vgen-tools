@@ -95,37 +95,88 @@ const makeAPIRequest = async (endpoint, options = {}) => {
     console.log('DEBUG: Making API request to:', endpoint);
     console.log('DEBUG: currentToken available:', !!currentToken);
 
-    const config = {
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        },
-        ...options
+    // Default headers
+    const headers = {
+        'Content-Type': 'application/json',
+        ...(options.headers || {})
     };
 
-    if (currentToken) {
-        config.headers.Authorization = `Bearer ${currentToken}`;
+    // Add auth token if available
+    const token = currentToken || localStorage.getItem('token');
+    if (token) {
+        headers.Authorization = `Bearer ${token}`;
         console.log('DEBUG: Added Authorization header');
     } else {
-        console.log('DEBUG: No token available, request will fail auth');
+        console.log('DEBUG: No token available, request may fail auth');
+    }
+
+    const config = {
+        method: 'GET',
+        credentials: 'same-origin',
+        ...options,
+        headers
+    };
+
+    // Ensure body is stringified if it's an object
+    if (config.body && typeof config.body === 'object' && !(config.body instanceof FormData)) {
+        config.body = JSON.stringify(config.body);
     }
 
     try {
-        console.log('DEBUG: Sending request...');
+        console.log('DEBUG: Sending request to:', url, 'with config:', {
+            method: config.method,
+            headers: config.headers,
+            body: config.body ? '[REDACTED]' : undefined
+        });
+
         const response = await fetch(url, config);
-        console.log('DEBUG: Response status:', response.status);
+        console.log('DEBUG: Received response with status:', response.status);
 
-        const data = await response.json();
+        // Parse response as JSON if possible
+        let data;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            const text = await response.text();
+            try {
+                data = JSON.parse(text);
+            } catch {
+                data = { message: text };
+            }
+        }
 
+        // Handle non-2xx responses
         if (!response.ok) {
             console.error('DEBUG: API request failed with status:', response.status, 'data:', data);
-            throw new Error(data.error || `HTTP error! status: ${response.status}`);
+            const error = new Error(data.message || `HTTP error! status: ${response.status}`);
+            error.status = response.status;
+            error.response = data;
+            throw error;
         }
 
         console.log('DEBUG: API request successful');
         return data;
     } catch (error) {
         console.error('DEBUG: API request failed:', error);
+        
+        // Handle network errors
+        if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+            throw new Error('Network error: Unable to connect to the server. Please check your internet connection.');
+        }
+        
+        // Handle 401 Unauthorized - token might be expired
+        if (error.status === 401) {
+            console.log('DEBUG: Token may be expired, clearing auth state');
+            currentToken = null;
+            currentUser = null;
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            updateAuthUI();
+            showNotification('Your session has expired. Please log in again.', 'error');
+            showModal('authModal');
+        }
+        
         throw error;
     }
 };
@@ -133,12 +184,21 @@ const makeAPIRequest = async (endpoint, options = {}) => {
 // Authentication functions
 const handleLogin = async (email, password) => {
     try {
+        showSpinner();
         const response = await makeAPIRequest(API_ENDPOINTS.auth.login, {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({ email, password })
         });
 
-        console.log('DEBUG: Login response received');
+        console.log('DEBUG: Login response received:', response);
+        
+        if (!response || !response.data) {
+            throw new Error('Invalid response from server');
+        }
+
         currentToken = response.data.token;
         currentUser = response.data.user;
 
@@ -146,12 +206,17 @@ const handleLogin = async (email, password) => {
         console.log('DEBUG: Setting currentUser:', !!currentUser);
         console.log('DEBUG: User data:', currentUser);
 
+        if (!currentToken || !currentUser) {
+            throw new Error('Authentication failed: Missing token or user data');
+        }
+
         localStorage.setItem('token', currentToken);
         localStorage.setItem('user', JSON.stringify(currentUser));
 
+        // Update UI and show success message
         updateAuthUI();
         hideModal('authModal');
-        showNotification(`Welcome back, ${currentUser.firstName || currentUser.first_name}!`);
+        showNotification(`Welcome back, ${currentUser.firstName || currentUser.first_name || 'User'}!`);
 
         // Check if there's a pending tool to redirect to
         const pendingTool = sessionStorage.getItem('pendingTool');
@@ -159,48 +224,64 @@ const handleLogin = async (email, password) => {
             console.log('DEBUG: Redirecting to pending tool:', pendingTool);
             sessionStorage.removeItem('pendingTool');
             showToolModal(pendingTool);
-        } else {
-            // Check if tool modal is open and refresh it (legacy behavior)
-            const toolModal = document.getElementById('toolModal');
-            if (toolModal && toolModal.style.display === 'block' && currentToolModal) {
-                console.log('DEBUG: Tool modal is open after login, refreshing content for:', currentToolModal);
-                const toolContent = document.getElementById('toolContent');
-                if (toolContent && toolContent.querySelector('.auth-required')) {
-                    console.log('DEBUG: Tool modal shows auth required, refreshing with authenticated content');
-                    showToolModal(currentToolModal);
-                }
-            }
+        } else if (currentToolModal) {
+            // If tool modal was open before login, refresh it
+            console.log('DEBUG: Refreshing tool modal after login:', currentToolModal);
+            showToolModal(currentToolModal);
         }
 
         return response.data;
     } catch (error) {
         console.error('DEBUG: Login failed:', error);
-        showNotification(error.message || 'Login failed', 'error');
+        const errorMessage = error.response?.data?.error || error.message || 'Login failed. Please try again.';
+        showNotification(errorMessage, 'error');
         throw error;
+    } finally {
+        hideSpinner();
+        console.log('DEBUG: Login process finished.');
     }
 };
 
 const handleRegister = async (email, password, firstName, lastName) => {
     try {
+        showSpinner();
         console.log('DEBUG: Attempting registration for email:', email);
         const response = await makeAPIRequest(API_ENDPOINTS.auth.register, {
             method: 'POST',
-            body: JSON.stringify({ email, password, firstName, lastName })
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                email, 
+                password, 
+                firstName, 
+                lastName 
+            })
         });
 
-        console.log('DEBUG: Registration response received');
+        console.log('DEBUG: Registration response received:', response);
+        
+        if (!response || !response.data) {
+            throw new Error('Invalid response from server');
+        }
+
         currentToken = response.data.token;
         currentUser = response.data.user;
 
         console.log('DEBUG: Setting currentToken:', !!currentToken);
         console.log('DEBUG: Setting currentUser:', !!currentUser);
 
+        if (!currentToken || !currentUser) {
+            throw new Error('Registration failed: Missing token or user data');
+        }
+
         localStorage.setItem('token', currentToken);
         localStorage.setItem('user', JSON.stringify(currentUser));
 
+        // Update UI and show success message
         updateAuthUI();
         hideModal('authModal');
-        showNotification('Registration successful!');
+        showNotification('Registration successful! Welcome to VGen Tools!');
 
         // Check if there's a pending tool to redirect to
         const pendingTool = sessionStorage.getItem('pendingTool');
@@ -208,24 +289,21 @@ const handleRegister = async (email, password, firstName, lastName) => {
             console.log('DEBUG: Redirecting to pending tool after registration:', pendingTool);
             sessionStorage.removeItem('pendingTool');
             showToolModal(pendingTool);
-        } else {
-            // Check if tool modal is open and refresh it (legacy behavior)
-            const toolModal = document.getElementById('toolModal');
-            if (toolModal && toolModal.style.display === 'block' && currentToolModal) {
-                console.log('DEBUG: Tool modal is open after registration, refreshing content for:', currentToolModal);
-                const toolContent = document.getElementById('toolContent');
-                if (toolContent && toolContent.querySelector('.auth-required')) {
-                    console.log('DEBUG: Tool modal shows auth required, refreshing with authenticated content');
-                    showToolModal(currentToolModal);
-                }
-            }
+        } else if (currentToolModal) {
+            // If tool modal was open before registration, refresh it
+            console.log('DEBUG: Refreshing tool modal after registration:', currentToolModal);
+            showToolModal(currentToolModal);
         }
 
         return response.data;
     } catch (error) {
         console.error('DEBUG: Registration failed:', error);
-        showNotification(error.message || 'Registration failed', 'error');
+        const errorMessage = error.response?.data?.error || error.message || 'Registration failed. Please try again.';
+        showNotification(errorMessage, 'error');
         throw error;
+    } finally {
+        hideSpinner();
+        console.log('DEBUG: Registration process finished.');
     }
 };
 
@@ -242,28 +320,63 @@ const updateAuthUI = () => {
     const loginBtn = document.getElementById('loginBtn');
     const registerBtn = document.getElementById('registerBtn');
     const navAuth = document.querySelector('.nav-auth');
+    const getStartedBtn = document.getElementById('getStartedBtn');
 
     if (currentUser && currentToken) {
-        loginBtn.style.display = 'none';
-        registerBtn.style.display = 'none';
+        // User is logged in
+        if (loginBtn) loginBtn.style.display = 'none';
+        if (registerBtn) registerBtn.style.display = 'none';
+        if (getStartedBtn) getStartedBtn.style.display = 'none';
         
         // Add user menu
         navAuth.innerHTML = `
             <div class="user-menu">
-                <span class="user-name">Welcome, ${currentUser.firstName || currentUser.first_name}!</span>
+                <span class="user-name">Welcome, ${currentUser.firstName || currentUser.first_name || 'User'}!</span>
                 <button class="btn btn-outline" id="logoutBtn">Logout</button>
             </div>
         `;
 
-        document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+        // Add event listener for logout button
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', handleLogout);
+        }
     } else {
-        loginBtn.style.display = 'inline-flex';
-        registerBtn.style.display = 'inline-flex';
+        // User is not logged in
+        if (loginBtn) loginBtn.style.display = 'inline-flex';
+        if (registerBtn) registerBtn.style.display = 'inline-flex';
+        if (getStartedBtn) getStartedBtn.style.display = 'inline-flex';
         
         navAuth.innerHTML = `
             <button id="loginBtn" class="btn btn-outline">Login</button>
             <button id="registerBtn" class="btn btn-primary">Register</button>
         `;
+
+        // Re-attach event listeners to the new buttons
+        const newLoginBtn = document.getElementById('loginBtn');
+        const newRegisterBtn = document.getElementById('registerBtn');
+        
+        if (newLoginBtn) {
+            newLoginBtn.addEventListener('click', () => {
+                document.getElementById('modalTitle').textContent = 'Login to VGen Tools';
+                document.getElementById('nameFields').style.display = 'none';
+                document.getElementById('authForm').reset();
+                document.getElementById('switchText').textContent = "Don't have an account? ";
+                document.getElementById('switchAuth').textContent = 'Register here';
+                showModal('authModal');
+            });
+        }
+
+        if (newRegisterBtn) {
+            newRegisterBtn.addEventListener('click', () => {
+                document.getElementById('modalTitle').textContent = 'Register for VGen Tools';
+                document.getElementById('nameFields').style.display = 'flex';
+                document.getElementById('authForm').reset();
+                document.getElementById('switchText').textContent = 'Already have an account? ';
+                document.getElementById('switchAuth').textContent = 'Login here';
+                showModal('authModal');
+            });
+        }
     }
 };
 
@@ -272,6 +385,13 @@ const showToolModal = (toolType) => {
     console.log('DEBUG: showToolModal called for tool:', toolType);
     console.log('DEBUG: currentUser exists:', !!currentUser);
     console.log('DEBUG: currentToken exists:', !!currentToken);
+
+    // Add log to check authentication status
+    if (!currentUser || !currentToken) {
+        console.log('DEBUG: User is NOT authenticated. Preparing to show auth modal.');
+    } else {
+        console.log('DEBUG: User IS authenticated. Preparing to show tool modal.');
+    }
 
     const modalTitle = document.getElementById('toolModalTitle');
     const toolFormContainer = document.getElementById('toolFormContainer');
@@ -286,33 +406,56 @@ const showToolModal = (toolType) => {
         analyzer: { title: 'Content Analyzer', icon: 'chart-line' }
     };
 
-    if (toolConfig[toolType]) {
-        currentToolModal = toolType; // Track current tool
-        console.log('DEBUG: Set currentToolModal to:', currentToolModal);
+    if (!toolConfig[toolType]) {
+        console.error('DEBUG: Unknown tool type:', toolType);
+        showNotification('Invalid tool selected', 'error');
+        return;
+    }
 
-        modalTitle.innerHTML = `<i class="fas fa-${toolConfig[toolType].icon}"></i> ${toolConfig[toolType].title}`;
+    currentToolModal = toolType; // Track current tool
+    console.log('DEBUG: Set currentToolModal to:', currentToolModal);
 
-        if (!currentUser) {
-            console.log('DEBUG: User not authenticated, showing login modal directly');
-            // Store the tool type so we can redirect back after login
-            sessionStorage.setItem('pendingTool', toolType);
-            
-            // Set up login modal
-            document.getElementById('modalTitle').textContent = 'Login to Access ' + toolConfig[toolType].title;
-            document.getElementById('nameFields').style.display = 'none';
-            document.getElementById('authForm').reset();
-            document.getElementById('switchText').textContent = "Don't have an account? ";
-            document.getElementById('switchAuth').textContent = 'Register here';
-            
-            // Show login modal instead of tool modal
-            showModal('authModal');
-        } else {
-            console.log('DEBUG: Showing tool form for authenticated user');
-            toolFormContainer.innerHTML = generateToolForm(toolType);
-            toolResultContainer.innerHTML = ''; // Clear previous results
-            setupToolForm(toolType);
-            showModal('toolModal');
-        }
+    // Update modal title with icon and tool name
+    modalTitle.innerHTML = `<i class="fas fa-${toolConfig[toolType].icon}"></i> ${toolConfig[toolType].title}`;
+
+    // Check if user is authenticated
+    if (!currentUser || !currentToken) {
+        console.log('DEBUG: User not authenticated, showing login modal');
+        
+        // Store the tool type so we can redirect back after login
+        sessionStorage.setItem('pendingTool', toolType);
+        
+        // Set up login modal
+        document.getElementById('modalTitle').textContent = 'Login to Access ' + toolConfig[toolType].title;
+        document.getElementById('nameFields').style.display = 'none';
+        document.getElementById('authForm').reset();
+        document.getElementById('switchText').textContent = "Don't have an account? ";
+        document.getElementById('switchAuth').textContent = 'Register here';
+        
+        // Show login modal instead of tool modal
+        showModal('authModal');
+        return;
+    }
+
+    // User is authenticated, show the tool
+    console.log('DEBUG: Showing tool form for authenticated user');
+    
+    try {
+        // Generate and display the form
+        toolFormContainer.innerHTML = generateToolForm(toolType);
+        
+        // Clear previous results
+        toolResultContainer.innerHTML = '';
+        
+        // Set up form event listeners
+        setupToolForm(toolType);
+        
+        // Show the tool modal
+        showModal('toolModal');
+        
+    } catch (error) {
+        console.error('DEBUG: Error setting up tool modal:', error);
+        showNotification('Failed to load tool. Please try again.', 'error');
     }
 };
 
@@ -815,6 +958,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             const toolType = e.target.closest('.tool-card').dataset.tool;
+            console.log('DEBUG: Tool button clicked for:', toolType);
             showToolModal(toolType);
         });
     });

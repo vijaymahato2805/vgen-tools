@@ -3,19 +3,22 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
 const { supabase } = require('../config/supabase');
+console.log('DEBUG: src/routes/auth.js started.');
+
 // Try Supabase first, fallback to local if connection fails
 let UserModel;
 let usingSupabase = false;
 
 // Initialize user model with proper connection testing
 async function initializeUserModel() {
+  console.log('DEBUG: Initializing user model...');
   try {
     // Test if we can actually connect to Supabase
-    const { supabase } = require('../config/supabase');
-    const { data, error } = await supabase.from('users').select('count').limit(1);
+    const { supabase, isOnline } = require('../config/supabase');
+    const supabaseIsOnline = await isOnline; // Await the promise
     
-    if (error && error.message.includes('fetch failed')) {
-      throw new Error('Network connection to Supabase failed');
+    if (!supabaseIsOnline) {
+      throw new Error('Supabase connection test failed in config/supabase.js');
     }
     
     // If we get here, Supabase is working
@@ -24,14 +27,16 @@ async function initializeUserModel() {
     usingSupabase = true;
     console.log('✅ Using Supabase for authentication (connection verified)');
   } catch (error) {
-    console.log('⚠️  Supabase connection failed, using local fallback:', error.message);
+    console.error('ERROR: Supabase connection failed in auth.js, using local fallback:', error.message);
     UserModel = require('../models/UserLocal');
     usingSupabase = false;
   }
+  console.log('DEBUG: User model initialized. Using Supabase:', usingSupabase);
 }
 
 // Initialize immediately but don't block the module loading
-initializeUserModel().catch(() => {
+initializeUserModel().catch((err) => {
+  console.error('ERROR: initializeUserModel caught an unexpected error:', err.message);
   console.log('⚠️  Fallback to local authentication due to initialization error');
   UserModel = require('../models/UserLocal');
   usingSupabase = false;
@@ -39,9 +44,11 @@ initializeUserModel().catch(() => {
 
 // Set default to local for immediate use
 if (!UserModel) {
+  console.log('DEBUG: UserModel not set, defaulting to UserLocal.');
   UserModel = require('../models/UserLocal');
   usingSupabase = false;
 }
+console.log('DEBUG: Current UserModel:', UserModel.name || 'Unknown');
 const {
   generateToken,
   protect,
@@ -85,15 +92,18 @@ const loginValidation = [
 // @desc    Register a new user
 // @access  Public
 router.post('/register', authRateLimit, registerValidation, async (req, res) => {
+  console.log('DEBUG: POST /api/auth/register hit.');
   try {
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('DEBUG: Register validation errors:', errors.array());
       return res.status(400).json({
         error: 'Validation failed',
         details: errors.array()
       });
     }
+    console.log('DEBUG: Register validation passed.');
 
     const { email, password, firstName, lastName } = req.body;
 
@@ -129,26 +139,30 @@ router.post('/register', authRateLimit, registerValidation, async (req, res) => 
     });
 
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('ERROR: Registration error:', error);
     res.status(500).json({
       error: 'Registration failed. Please try again.'
     });
   }
 });
+console.log('DEBUG: POST /api/auth/register route configured.');
 
 // @route   POST /api/auth/login
 // @desc    Login user
 // @access  Public
 router.post('/login', authRateLimit, loginValidation, async (req, res) => {
+  console.log('DEBUG: POST /api/auth/login hit.');
   try {
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('DEBUG: Login validation errors:', errors.array());
       return res.status(400).json({
         error: 'Validation failed',
         details: errors.array()
       });
     }
+    console.log('DEBUG: Login validation passed.');
 
     const { email, password } = req.body;
 
@@ -194,19 +208,22 @@ router.post('/login', authRateLimit, loginValidation, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('ERROR: Login error:', error);
     res.status(500).json({
       error: 'Login failed. Please try again.'
     });
   }
 });
+console.log('DEBUG: POST /api/auth/login route configured.');
 
 // @route   GET /api/auth/me
 // @desc    Get current user profile
 // @access  Private
 router.get('/me', protect, async (req, res) => {
+  console.log('DEBUG: GET /api/auth/me hit.');
   try {
     const user = await UserModel.findById(req.user.id);
+    console.log('DEBUG: User found for /me:', !!user);
 
     if (!user) {
       return res.status(404).json({
@@ -222,20 +239,23 @@ router.get('/me', protect, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get profile error:', error);
+    console.error('ERROR: Get profile error:', error);
     res.status(500).json({
       error: 'Failed to retrieve profile'
     });
   }
 });
+console.log('DEBUG: GET /api/auth/me route configured.');
 
 // @route   PUT /api/auth/me
 // @desc    Update current user profile
 // @access  Private
 router.put('/me', protect, async (req, res) => {
+  console.log('DEBUG: PUT /api/auth/me hit.');
   try {
     const updates = req.body;
     const allowedUpdates = ['firstName', 'lastName', 'bio', 'location', 'website', 'linkedin', 'github', 'preferences'];
+    console.log('DEBUG: Updates received for /me:', updates);
 
     // Filter out disallowed updates
     const filteredUpdates = {};
@@ -260,29 +280,34 @@ router.put('/me', protect, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Update profile error:', error);
+    console.error('ERROR: Update profile error:', error);
     res.status(500).json({
       error: 'Failed to update profile'
     });
   }
 });
+console.log('DEBUG: PUT /api/auth/me route configured.');
 
 // @route   POST /api/auth/logout
 // @desc    Logout user (client-side should remove token)
 // @access  Private
 router.post('/logout', protect, (req, res) => {
+  console.log('DEBUG: POST /api/auth/logout hit.');
   res.json({
     success: true,
     message: 'Logout successful'
   });
 });
+console.log('DEBUG: POST /api/auth/logout route configured.');
 
 // @route   GET /api/auth/usage
 // @desc    Get current usage statistics
 // @access  Private
 router.get('/usage', protect, async (req, res) => {
+  console.log('DEBUG: GET /api/auth/usage hit.');
   try {
     const user = await UserModel.findById(req.user.id);
+    console.log('DEBUG: User found for /usage:', !!user);
 
     res.json({
       success: true,
@@ -297,12 +322,13 @@ router.get('/usage', protect, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Usage check error:', error);
+    console.error('ERROR: Usage check error:', error);
     res.status(500).json({
       error: 'Failed to retrieve usage information'
     });
   }
 });
+console.log('DEBUG: GET /api/auth/usage route configured.');
 
 // @route   POST /api/auth/forgot-password
 // @desc    Request password reset
@@ -313,14 +339,17 @@ router.post('/forgot-password', [
     .normalizeEmail()
     .withMessage('Please provide a valid email')
 ], async (req, res) => {
+  console.log('DEBUG: POST /api/auth/forgot-password hit.');
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('DEBUG: Forgot password validation errors:', errors.array());
       return res.status(400).json({
         error: 'Validation failed',
         details: errors.array()
       });
     }
+    console.log('DEBUG: Forgot password validation passed.');
 
     const { email } = req.body;
 
@@ -348,12 +377,13 @@ router.post('/forgot-password', [
     });
 
   } catch (error) {
-    console.error('Forgot password error:', error);
+    console.error('ERROR: Forgot password error:', error);
     res.status(500).json({
       error: 'Failed to process password reset request'
     });
   }
 });
+console.log('DEBUG: POST /api/auth/forgot-password route configured.');
 
 // @route   POST /api/auth/reset-password
 // @desc    Reset password with token
@@ -363,14 +393,17 @@ router.post('/reset-password/:token', [
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters long')
 ], async (req, res) => {
+  console.log('DEBUG: POST /api/auth/reset-password/:token hit.');
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('DEBUG: Reset password validation errors:', errors.array());
       return res.status(400).json({
         error: 'Validation failed',
         details: errors.array()
       });
     }
+    console.log('DEBUG: Reset password validation passed.');
 
     const { password } = req.body;
     const { token } = req.params;
@@ -397,11 +430,13 @@ router.post('/reset-password/:token', [
     });
 
   } catch (error) {
-    console.error('Reset password error:', error);
+    console.error('ERROR: Reset password error:', error);
     res.status(500).json({
       error: 'Failed to reset password'
     });
   }
 });
+console.log('DEBUG: POST /api/auth/reset-password/:token route configured.');
+console.log('DEBUG: src/routes/auth.js finished initialization.');
 
 module.exports = router;
